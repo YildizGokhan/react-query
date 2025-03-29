@@ -7,19 +7,18 @@ import SearchInput from "@/components/SearchInput";
 import ItemForm from "@/components/ItemForm";
 import ItemList from "@/components/ItemList";
 import Pagination from "@/components/Pagination";
-import SkeletonCard from "@/components/SkeletonCard";
 import { debounce } from "lodash";
 
 export default function Home() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  const { data, isLoading, addItem, deleteItem, editItem } = useItems(page, debouncedSearch);
   const { isModalOpen, toggleModal } = useUIStore();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [editItemData, setEditItemData] = useState(null);
+
+  const { data, isLoading, addItem, deleteItem, editItem } = useItems(page, debouncedSearch);
 
   const handleSearch = useCallback(
     debounce((value) => {
@@ -36,46 +35,40 @@ export default function Home() {
     setPage(1);
   }, [debouncedSearch]);
 
-  const handleAdd = () => {
-    addItem.mutate(
-      { title, description },
-      {
-        onSuccess: () => {
-          setTitle("");
-          setDescription("");
-          toggleModal();
-        },
-      }
-    );
+  const handleSubmit = () => {
+    if (editItemData) {
+      editItem.mutate(
+        { id: editItemData.id, title, description },
+        {
+          onSuccess: () => {
+            resetForm();
+          },
+        }
+      );
+    } else {
+      addItem.mutate(
+        { title, description },
+        {
+          onSuccess: () => {
+            resetForm();
+          },
+        }
+      );
+    }
   };
 
-  const handleEdit = () => {
-    editItem.mutate(
-      { id: editItemData.id, title, description },
-      {
-        onSuccess: () => {
-          setTitle("");
-          setDescription("");
-          setEditItemData(null);
-          toggleModal();
-        },
-      }
-    );
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setEditItemData(null);
+    toggleModal();
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
-    );
-  }
+  if (isLoading) return <div className="p-4">Yükleniyor...</div>;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">React Query + Filter + Pagination</h1>
+    <div className="p-4 max-w-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-4">React Query CRUD + Dark Mode</h1>
 
       <SearchInput search={search} setSearch={setSearch} />
 
@@ -97,9 +90,7 @@ export default function Home() {
           description={description}
           setTitle={setTitle}
           setDescription={setDescription}
-          onSubmit={() => {
-            editItemData ? handleEdit() : handleAdd();
-          }}
+          onSubmit={handleSubmit}
           editMode={!!editItemData}
         />
       )}

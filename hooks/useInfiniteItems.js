@@ -2,7 +2,6 @@
 
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchItems, addItem, deleteItem, editItem } from "../services/api";
-import toast from "react-hot-toast";
 
 export const useInfiniteItems = (search) => {
   const queryClient = useQueryClient();
@@ -10,51 +9,51 @@ export const useInfiniteItems = (search) => {
   const {
     data,
     isLoading,
-    isFetchingNextPage,
+    error,
     fetchNextPage,
     hasNextPage,
+    isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["items-infinite", search],
+    queryKey: ["items", search],
     queryFn: ({ pageParam = 1 }) => fetchItems(pageParam, search),
     getNextPageParam: (lastPage) => {
-      if (lastPage.page < lastPage.totalPages) {
-        return lastPage.page + 1;
+      if (lastPage.currentPage < lastPage.totalPages) {
+        return lastPage.currentPage + 1;
       }
       return undefined;
     },
-    onError: () => toast.error("Veri alınamadı"),
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
   });
 
   const addItemMutation = useMutation({
     mutationFn: addItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items-infinite"] });
-      toast.success("Eklendi");
+      queryClient.invalidateQueries({ queryKey: ["items"] });
     },
   });
 
   const deleteItemMutation = useMutation({
     mutationFn: deleteItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items-infinite"] });
-      toast.success("Silindi");
+      queryClient.invalidateQueries({ queryKey: ["items"] });
     },
   });
 
   const editItemMutation = useMutation({
     mutationFn: editItem,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items-infinite"] });
-      toast.success("Güncellendi");
+      queryClient.invalidateQueries({ queryKey: ["items"] });
     },
   });
 
   return {
     data,
     isLoading,
-    isFetchingNextPage,
+    error,
     fetchNextPage,
     hasNextPage,
+    isFetchingNextPage,
     addItem: addItemMutation,
     deleteItem: deleteItemMutation,
     editItem: editItemMutation,
